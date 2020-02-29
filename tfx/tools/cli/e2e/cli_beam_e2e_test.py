@@ -19,10 +19,12 @@ from __future__ import division
 from __future__ import print_function
 
 import codecs
+import glob
 import locale
 import os
 import tempfile
 
+import absl
 from click import testing as click_testing
 import tensorflow as tf
 
@@ -288,7 +290,11 @@ class CliBeamEndToEndTest(tf.test.TestCase):
     self._valid_run_and_check(pipeline_name)
 
     # Infer Schema when pipeline runs for the first time.
-    schema_path = os.path.join(os.getcwd(), 'schema.pbtxt')
+    all_files = glob.glob(os.getcwd() + '/*', recursive=True)
+    absl.logging.info('ZZZ: CWD:' + os.getcwd())
+    absl.logging.info('ZZZ: Files:' + str(all_files))
+
+    schema_path = os.path.join(os.getcwd(), 'data', 'schema.pbtxt')
     result = self.runner.invoke(cli_group, [
         'pipeline', 'schema', '--engine', 'beam', '--pipeline_name',
         pipeline_name
