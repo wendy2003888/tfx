@@ -16,39 +16,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from absl import logging
+import os
+import absl
 from typing import Any, Dict, List, Text
-from google.cloud import bigquery
-
 from tfx import types
+from google.cloud import bigquery
 from tfx.components.pusher import executor as tfx_pusher_executor
 from tfx.types import artifact_utils
-from tfx.utils import io_utils
 from tfx.utils import path_utils
 from tfx.utils import telemetry_utils
 
 _POLLING_INTERVAL_IN_SECONDS = 30
-
-_GCS_PREFIX = 'gs://'
-
-# Keys to the items in custom_config passed as a part of exec_properties.
-SERVING_ARGS_KEY = 'bigquery_serving_args'
-
-# BigQueryML serving argument keys
-_PROJECT_ID_KEY = 'project_id'
-_BQ_DATASET_ID_KEY = 'bq_dataset_id'
-_MODEL_NAME_KEY = 'model_name'
-
-# Keys for custom_config.
-_CUSTOM_CONFIG_KEY = 'custom_config'
-
-# Model name should be enclosed within backticks.
-# model_path should ends with asterisk glob (/*).
-_BQML_CREATE_OR_REPLACE_MODEL_QUERY_TEMPLATE = '''
-CREATE OR REPLACE MODEL `{model_uri}`
-OPTIONS (model_type='tensorflow',
-         model_path='{model_path}/*')
-'''
 
 
 class Executor(tfx_pusher_executor.Executor):
@@ -80,42 +58,42 @@ class Executor(tfx_pusher_executor.Executor):
       RuntimeError: if the Big Query job failed.
     """
     self._log_startup(input_dict, output_dict, exec_properties)
-    model_push = artifact_utils.get_single_instance(
-        output_dict[tfx_pusher_executor.PUSHED_MODEL_KEY])
+    model_push = artifact_utils.get_single_instance(output_dict['model_push'])
     if not self.CheckBlessing(input_dict):
-      self._MarkNotPushed(model_push)
+      model_push.set_int_custom_property('pushed', 0)
       return
 
     model_export = artifact_utils.get_single_instance(
-        input_dict[tfx_pusher_executor.MODEL_KEY])
+        input_dict['model_export'])
     model_export_uri = model_export.uri
 
-    custom_config = exec_properties.get(_CUSTOM_CONFIG_KEY, {})
-    bigquery_serving_args = custom_config.get(SERVING_ARGS_KEY)
+    custom_config = exec_properties.get('custom_config', {})
+    bigquery_serving_args = custom_config.get('bigquery_serving_args', None)
     # if configuration is missing error out
     if bigquery_serving_args is None:
       raise ValueError('Big Query ML configuration was not provided')
 
-    bq_model_uri = '.'.join([
-        bigquery_serving_args[_PROJECT_ID_KEY],
-        bigquery_serving_args[_BQ_DATASET_ID_KEY],
-        bigquery_serving_args[_MODEL_NAME_KEY],
-    ])
+    bq_model_uri = '`{}`.`{}`.`{}`'.format(
+        bigquery_serving_args['project_id'],
+        bigquery_serving_args['bq_dataset_id'],
+        bigquery_serving_args['model_name'])
 
     # Deploy the model.
-    io_utils.copy_dir(
-        src=path_utils.serving_model_path(model_export_uri),
-        dst=model_push.uri)
-    model_path = model_push.uri
-    if not model_path.startswith(_GCS_PREFIX):
+    model_path = path_utils.serving_model_path(model_export_uri)
+
+    if not model_path.startswith('gs://'):
       raise ValueError(
           'pipeline_root must be gs:// for BigQuery ML Pusher.')
 
-    logging.info('Deploying the model to BigQuery ML for serving: %s from %s',
-                 bigquery_serving_args, model_path)
+    absl.logging.info(
+        'Deploying the model to BigQuery ML for serving: {} from {}'.format(
+            bigquery_serving_args, model_path))
 
-    query = _BQML_CREATE_OR_REPLACE_MODEL_QUERY_TEMPLATE.format(
-        model_uri=bq_model_uri, model_path=model_path)
+    query = ("""
+      CREATE OR REPLACE MODEL {}
+      OPTIONS (model_type='tensorflow',
+               model_path='{}')""".format(bq_model_uri,
+                                          os.path.join(model_path, '*')))
 
     # TODO(zhitaoli): Refactor the executor_class_path creation into a common
     # utility function.
@@ -133,8 +111,9 @@ class Executor(tfx_pusher_executor.Executor):
     except Exception as e:
       raise RuntimeError('BigQuery ML Push failed: {}'.format(e))
 
-    logging.info('Successfully deployed model %s serving from %s',
-                 bq_model_uri, model_path)
+    absl.logging.info('Successfully deployed model {} serving from {}'.format(
+        bq_model_uri, model_path))
 
     # Setting the push_destination to bigquery uri
-    self._MarkPushed(model_push, pushed_destination=bq_model_uri)
+    model_push.set_int_custom_property('pushed', 1)
+    model_push.set_string_custom_property('pushed_model', bq_model_uri)

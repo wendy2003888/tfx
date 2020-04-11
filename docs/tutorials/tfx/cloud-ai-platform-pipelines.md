@@ -269,8 +269,8 @@ template sets the model to `taxi`:
 
 ```
 !tfx template copy \
-  --pipeline-name={PIPELINE_NAME} \
-  --destination-path={PROJECT_DIR} \
+  --pipeline_name={PIPELINE_NAME} \
+  --destination_path={PROJECT_DIR} \
   --model=taxi
 ```
 
@@ -299,21 +299,15 @@ these would be the supporting files that your pipeline requires.
 
 Here is brief description of the Python files.
 
--   `pipeline` - This directory contains the definition of the pipeline
-    -   `configs.py` — defines common constants for pipeline runners
-    -   `pipeline.py` — defines TFX components and a pipeline
--   `models` - This directory contains ML model definitions.
-    -   `features.py` `features_test.py` — defines features for the model
-    -   `preprocessing.py` / `preprocessing_test.py` — defines preprocessing
-        jobs using `tf::Transform`
-    -   `estimator` - This directory contains an Estimator based model.
-        -   `constants.py` — defines constants of the model
-        -   `model.py` / `model_test.py` — defines DNN model using TF estimator
-    -   `keras` - This directory contains a Keras based model.
-        -   `constants.py` — defines constants of the model
-        -   `model.py` / `model_test.py` — defines DNN model using Keras
+-   `configs.py` — defines common constants for pipeline runners
+-   `pipeline.py` — defines TFX components and a pipeline
 -   `beam_dag_runner.py` / `kubeflow_dag_runner.py` — define runners for each
     orchestration engine
+-   `features.py` `features_test.py` — defines features for the model
+-   `hparams.py` — defines hyperparameters of the model
+-   `preprocessing.py` / `preprocessing_test.py` — defines preprocessing jobs
+    using `tf::Transform`
+-   `model.py` / `model_test.py` — defines DNN model using TF estimator
 
 ## 7. Run your first TFX pipeline on Kubeflow
 
@@ -336,8 +330,8 @@ Get a list of bucket names:
 
 Copy the name of the bucket you are using to the clipboard.
 
-Caution: You must open the `pipeline`/`configs.py` file and set the
-`GCS_BUCKET_NAME` constant to the name of the bucket.
+Caution: You must open the `configs.py` file and set the `GCS_BUCKET_NAME`
+constant to the name of the bucket.
 
 ### Create the pipeline
 
@@ -345,9 +339,9 @@ The notebook then uses the `tfx pipeline create` command to create the pipeline.
 
 ```
 !tfx pipeline create  \
---pipeline-path=kubeflow_dag_runner.py \
+--pipeline_path=kubeflow_dag_runner.py \
 --endpoint={ENDPOINT} \
---build-target-image={CUSTOM_TFX_IMAGE}
+--build_target_image={CUSTOM_TFX_IMAGE}
 ```
 
 While creating a pipeline, `Dockerfile` and `build.yaml` will be generated to
@@ -361,7 +355,7 @@ your pipeline. You will also see this run listed under Experiments in the
 Kubeflow Pipelines Dashboard.
 
 ```
-!tfx run create --pipeline-name={PIPELINE_NAME} --endpoint={ENDPOINT}
+!tfx run create --pipeline_name={PIPELINE_NAME} --endpoint={ENDPOINT}
 ```
 
 You can view your pipeline from the Kubeflow Pipelines Dashboard.
@@ -399,8 +393,8 @@ data.
 
 ### In Jupyter lab file editor:
 
-In `pipeline`/`pipeline.py`, uncomment the lines which append these components
-to your pipeline:
+In `pipeline.py`, uncomment the lines which append these components to your
+pipeline:
 
 ```
 # components.append(statistics_gen)
@@ -415,10 +409,10 @@ to your pipeline:
 ```
 # Update the pipeline
 ! tfx pipeline update \
-  --pipeline-path=kubeflow_dag_runner.py \
+  --pipeline_path=kubeflow_dag_runner.py \
   --endpoint={ENDPOINT}
 
-! tfx run create --pipeline-name "{PIPELINE_NAME}"
+! tfx run create --pipeline_name "{PIPELINE_NAME}"
 ```
 
 ### Check the pipeline
@@ -461,7 +455,7 @@ serving.
 
 ### In Jupyter lab file editor:
 
-In `pipeline`/`pipeline.py`, find and uncomment the line which appends
+In `pipeline.py`, find and uncomment the line which appends
 [Transform](https://www.tensorflow.org/tfx/guide/transform) to the pipeline.
 
 ```
@@ -473,10 +467,10 @@ In `pipeline`/`pipeline.py`, find and uncomment the line which appends
 ```
 # Update the pipeline
 ! tfx pipeline update \
-  --pipeline-path=kubeflow_dag_runner.py \
+  --pipeline_path=kubeflow_dag_runner.py \
   --endpoint={ENDPOINT}
 
-! tfx run create --pipeline-name "{PIPELINE_NAME}"
+! tfx run create --pipeline_name "{PIPELINE_NAME}"
 ```
 
 ### Check pipeline outputs
@@ -509,8 +503,7 @@ Train a TensorFlow model with your nice, clean, transformed data.
 
 ### In Jupyter lab file editor:
 
-In `pipeline`/`pipeline.py`, find and uncomment the which appends Trainer to the
-pipeline:
+In `pipeline.py`, find and uncomment the which appends Trainer to the pipeline:
 
 ```
 # components.append(trainer)
@@ -521,10 +514,10 @@ pipeline:
 ```
 # Update the pipeline
 ! tfx pipeline update \
-  --pipeline-path=kubeflow_dag_runner.py \
+  --pipeline_path=kubeflow_dag_runner.py \
   --endpoint={ENDPOINT}
 
-! tfx run create --pipeline-name "{PIPELINE_NAME}"
+! tfx run create --pipeline_name "{PIPELINE_NAME}"
 ```
 
 ### Check pipeline outputs
@@ -550,8 +543,6 @@ Understanding more than just the top level metrics.
 *   Often key subsets of users or data are very important, and may be small
     *   Performance in critical but unusual conditions
     *   Performance for key audiences such as influencers
-*   If you’re replacing a model that is currently in production, first make sure
-    that the new one is better
 
 ### Components
 
@@ -560,8 +551,8 @@ Understanding more than just the top level metrics.
 
 ### In Jupyter lab file editor:
 
-In `pipeline`/`pipeline.py`, find and uncomment the line which appends Evaluator
-to the pipeline:
+In `pipeline.py`, find and uncomment the line which appends Evaluator to the
+pipeline:
 
 ```
 components.append(model_analyzer)
@@ -572,10 +563,10 @@ components.append(model_analyzer)
 ```
 # Update the pipeline
 ! tfx pipeline update \
-  --pipeline-path=kubeflow_dag_runner.py \
+  --pipeline_path=kubeflow_dag_runner.py \
   --endpoint={ENDPOINT}
 
-! tfx run create --pipeline-name "{PIPELINE_NAME}"
+! tfx run create --pipeline_name "{PIPELINE_NAME}"
 ```
 
 ### Check pipeline outputs
@@ -595,6 +586,8 @@ advanced example see the
 
 If the new model is ready, make it so.
 
+*   If you’re replacing a model that is currently in production, first make sure
+    that the new one is better
 *   Pusher deploys SavedModels to well-known locations
 
 Deployment targets receive new models from well-known locations
@@ -611,8 +604,8 @@ Deployment targets receive new models from well-known locations
 
 ### In Jupyter lab file editor:
 
-In `pipeline`/`pipeline.py`, find and uncomment the line that appends Pusher to
-the pipeline:
+In `pipeline.py`, find and uncomment the line that appends Pusher to the
+pipeline:
 
 ```
 # components.append(pusher)
@@ -651,18 +644,19 @@ examples in TFX.
 
 #### In Jupyter lab file editor:
 
-1.  Open `pipeline`/`pipeline.py`.
+1.  Open `pipeline.py`.
 
     1.  Comment out `CsvExampleGen`.
     1.  Uncomment the line which creates an instance of `BigQueryExampleGen`.
-    1.  Uncomment `query` argument of the `create_pipeline` function.
+    1.  Uncomment `import` statement and `query` argument of the
+        `create_pipeline` function.
     1.  Specify which GCP project to use for BigQuery by setting `--project` in
         `beam_pipeline_args` when creating a pipeline.
 
-1.  Open `pipeline`/`configs.py`
+1.  Open `configs.py`
 
     1.  Uncomment the definition of `GCP_PROJECT_ID`, `GCP_REGION`,
-        `BIG_QUERY_WITH_DIRECT_RUNNER_BEAM_PIPELINE_ARGS` and `BIG_QUERY_QUERY`.
+        `BIG_QUERY_BEAM_PIPELINE_ARGS` and `BIG_QUERY_QUERY`.
     1.  Replace the project id and the region value in this file.
 
 1.  Open `kubeflow_dag_runner.py`
@@ -675,10 +669,10 @@ examples in TFX.
 ```
 # Update the pipeline
 ! tfx pipeline update \
-  --pipeline-path=kubeflow_dag_runner.py \
+  --pipeline_path=kubeflow_dag_runner.py \
   --endpoint={ENDPOINT}
 
-! tfx run create --pipeline-name "{PIPELINE_NAME}"
+! tfx run create --pipeline_name "{PIPELINE_NAME}"
 ```
 
 ### Try Cloud AI Platform Training and Prediction with KFP
@@ -697,7 +691,7 @@ Cloud AI Platform services.
 
 #### In Jupyter lab file editor:
 
-1.  Open `pipeline`/`configs.py`
+1.  Open `configs.py`
 
     1.  Uncomment the definition of `GCP_PROJECT_ID`, `GCP_REGION`,
         `GCP_AI_PLATFORM_TRAINING_ARGS` and `GCP_AI_PLATFORM_SERVING_ARGS`.
@@ -713,10 +707,10 @@ Cloud AI Platform services.
 ```
 # Update the pipeline
 ! tfx pipeline update \
-  --pipeline-path=kubeflow_dag_runner.py \
+  --pipeline_path=kubeflow_dag_runner.py \
   --endpoint={ENDPOINT}
 
-! tfx run create --pipeline-name "{PIPELINE_NAME}"
+! tfx run create --pipeline_name "{PIPELINE_NAME}"
 ```
 
 ## 14. Use your own data
@@ -735,10 +729,10 @@ You need to modify the pipeline definition to accomodate your data.
 ### If your data is stored in BigQuery
 
 1.  Modify `BIG_QUERY_QUERY` in configs.py to your query statement.
-1.  Add features in `models`/`features.py`.
-1.  Modify `models`/`preprocessing.py` to
+1.  Add features in `features.py`.
+1.  Modify `preprocessing.py` to
     [transform input data for training](https://www.tensorflow.org/tfx/guide/transform).
-1.  Modify `models`/`keras`/`model.py` and `models`/`keras`/`constants.py` to
+1.  Modify `model.py` and `hparams.py` to
     [describe your ML model](https://www.tensorflow.org/tfx/guide/trainer).
 
 ### Learn more about Trainer

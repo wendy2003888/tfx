@@ -19,8 +19,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from typing import Text
-
 # Standard Imports
 
 import tensorflow as tf
@@ -51,36 +49,11 @@ class AnnotationsTest(tf.test.TestCase):
     # OK.
     _ = annotations._ArtifactGeneric[standard_artifacts.Examples]
 
-  def testArtifactAnnotationUsage(self):
+  def testUsage(self):
     _ = annotations.InputArtifact[standard_artifacts.Examples]
+    _ = annotations.InputUri[standard_artifacts.Examples]
     _ = annotations.OutputArtifact[standard_artifacts.Examples]
-
-  def testPrimitiveTypeGenericAnnotation(self):
-    # Error: type hint whose parameter is not a primitive type
-    with self.assertRaisesRegexp(ValueError,
-                                 'T to be `int`, `float`, `str` or `bytes`'):
-      _ = annotations._PrimitiveTypeGeneric[artifact.Artifact]
-    with self.assertRaisesRegexp(ValueError,
-                                 'T to be `int`, `float`, `str` or `bytes`'):
-      _ = annotations._PrimitiveTypeGeneric[object]
-    with self.assertRaisesRegexp(ValueError,
-                                 'T to be `int`, `float`, `str` or `bytes`'):
-      _ = annotations._PrimitiveTypeGeneric[123]
-    with self.assertRaisesRegexp(ValueError,
-                                 'T to be `int`, `float`, `str` or `bytes`'):
-      _ = annotations._PrimitiveTypeGeneric['string']
-
-    # OK.
-    _ = annotations._PrimitiveTypeGeneric[int]
-    _ = annotations._PrimitiveTypeGeneric[float]
-    _ = annotations._PrimitiveTypeGeneric[Text]
-    _ = annotations._PrimitiveTypeGeneric[bytes]
-
-  def testParameterUsage(self):
-    _ = annotations.Parameter[int]
-    _ = annotations.Parameter[float]
-    _ = annotations.Parameter[Text]
-    _ = annotations.Parameter[bytes]
+    _ = annotations.OutputUri[standard_artifacts.Examples]
 
 
 if __name__ == '__main__':

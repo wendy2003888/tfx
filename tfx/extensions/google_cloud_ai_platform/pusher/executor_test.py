@@ -66,20 +66,6 @@ class ExecutorTest(tf.test.TestCase):
     }
     self._executor = executor.Executor()
 
-  def assertDirectoryEmpty(self, path):
-    self.assertEqual(len(tf.io.gfile.listdir(path)), 0)
-
-  def assertDirectoryNotEmpty(self, path):
-    self.assertGreater(len(tf.io.gfile.listdir(path)), 0)
-
-  def assertPushed(self):
-    self.assertDirectoryNotEmpty(self._model_push.uri)
-    self.assertEqual(1, self._model_push.get_int_custom_property('pushed'))
-
-  def assertNotPushed(self):
-    self.assertDirectoryEmpty(self._model_push.uri)
-    self.assertEqual(0, self._model_push.get_int_custom_property('pushed'))
-
   @mock.patch.object(executor, 'runner', autospec=True)
   def testDoBlessed(self, mock_runner):
     self._model_blessing.uri = os.path.join(self._source_data_dir,
@@ -90,16 +76,14 @@ class ExecutorTest(tf.test.TestCase):
     executor_class_path = '%s.%s' % (self._executor.__class__.__module__,
                                      self._executor.__class__.__name__)
     mock_runner.deploy_model_for_aip_prediction.assert_called_once_with(
-        self._model_push.uri,
+        self._model_push.mlmd_artifact.custom_properties['pushed_model']
+        .string_value,
         mock.ANY,
         mock.ANY,
         executor_class_path,
     )
-    self.assertPushed()
-    version = self._model_push.get_string_custom_property('pushed_version')
     self.assertEqual(
-        self._model_push.get_string_custom_property('pushed_destination'),
-        'projects/project_id/models/model_name/versions/{}'.format(version))
+        1, self._model_push.mlmd_artifact.custom_properties['pushed'].int_value)
 
   @mock.patch.object(executor, 'runner', autospec=True)
   def testDoNotBlessed(self, mock_runner):
@@ -108,7 +92,8 @@ class ExecutorTest(tf.test.TestCase):
     self._model_blessing.set_int_custom_property('blessed', 0)
     self._executor.Do(self._input_dict, self._output_dict,
                       self._exec_properties)
-    self.assertNotPushed()
+    self.assertEqual(
+        0, self._model_push.mlmd_artifact.custom_properties['pushed'].int_value)
     mock_runner.deploy_model_for_aip_prediction.assert_not_called()
 
 
