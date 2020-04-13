@@ -78,8 +78,18 @@ class InputArtifact(_ArtifactGeneric):
   pass
 
 
+class InputUri(_ArtifactGeneric):
+  """Input artifact URI type annotation."""
+  pass
+
+
 class OutputArtifact(_ArtifactGeneric):
   """Output artifact object type annotation."""
+  pass
+
+
+class OutputUri(_ArtifactGeneric):
+  """Output artifact URI type annotation."""
   pass
 
 

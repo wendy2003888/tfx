@@ -178,12 +178,7 @@ def get_artifact_type_class(
   # to use a native artifact class.
   for cls in itertools.chain(native_artifact_classes,
                              generated_artifact_classes):
-    candidate_type = cls._get_artifact_type()  # pylint: disable=protected-access
-    # We need to compare `.name` and `.properties` (and not the entire proto
-    # directly), because the proto `.id` field will be populated when the type
-    # is read from MLMD.
-    if (artifact_type.name == candidate_type.name and
-        artifact_type.properties == candidate_type.properties):
+    if artifact_type == cls._get_artifact_type():  # pylint: disable=protected-access
       return cls
 
   # Generate a class for the artifact type on the fly.
