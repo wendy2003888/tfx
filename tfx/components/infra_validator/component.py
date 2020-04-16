@@ -74,7 +74,6 @@ class InfraValidator(base_component.BaseComponent):
           kubernetes=KubernetesConfig(),  # Running on Kubernetes.
       ),
   )
-  ```
   """
 
   SPEC_CLASS = standard_component_specs.InfraValidatorSpec
