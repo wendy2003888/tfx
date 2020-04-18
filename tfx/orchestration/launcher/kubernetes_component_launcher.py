@@ -66,8 +66,9 @@ class KubernetesComponentLauncher(base_component_launcher.BaseComponentLauncher
         kubernetes_component_config.KubernetesComponentConfig):
       return False
 
-    return isinstance(component_executor_spec,
-                      executor_spec.ExecutorContainerSpec)
+    return isinstance(
+        component_executor_spec,
+        (executor_spec.ExecutorContainerSpec, executor_spec.ContainerSpec))
 
   def _run_executor(self, execution_id: int,
                     input_dict: Dict[Text, List[types.Artifact]],

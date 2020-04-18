@@ -19,11 +19,12 @@ from __future__ import division
 from __future__ import print_function
 
 import abc
-from typing import List, Text, Type
+from typing import List, Text, Type, Union
 
 from six import with_metaclass
 
 from tfx.components.base import base_executor
+from tfx.dsl.components import placeholders
 from tfx.utils import import_utils
 from tfx.utils import json_utils
 
@@ -103,3 +104,48 @@ class ExecutorContainerSpec(ExecutorSpec):
     self.command = command
     self.args = args
     super(ExecutorContainerSpec, self).__init__()
+
+
+CommandlineArgumentType = Union[
+    Text,
+    placeholders.InputValuePlaceholder,
+    placeholders.InputUriPlaceholder,
+    placeholders.OutputUriPlaceholder,
+]
+
+
+class ContainerSpec(ExecutorSpec):
+  """Experimental: Describes a command-line program inside a container.
+
+  This class is similar to ExecutorContainerSpec, but uses a different
+  placeholder system.
+  The spec includes the container image name and the command line
+  (entrypoint plus arguments) for a program inside the container.
+
+  Example:
+
+    EXECUTOR_SPEC = executor_spec.ContainerSpec(
+        image='dummy/transformer',
+        command=[
+            'transformer',
+            '--input1', placeholders.InputUriPlaceholder('input1'),
+            '--output1', placeholders.OutputUriPlaceholder('output1'),
+            '--param1', placeholders.InputValuePlaceholder('param1'),
+        ]
+    )
+
+  Attributes:
+    image: Container image name.
+    command: Container entrypoint command-line. Not executed within a shell.
+      The command-line should use placeholder objects that will be replaced at
+      the compilation time. Note: Jinja templates are not supported.
+  """
+
+  def __init__(
+      self,
+      image: Text,
+      command: List[CommandlineArgumentType] = None,
+  ):
+    self.image = image
+    self.command = command
+    super(ContainerSpec, self).__init__()

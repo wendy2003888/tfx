@@ -4,6 +4,8 @@
 *   Pusher's `filesystem` destination can now explicitly specify the versioning
     method using `versioning` field. By default it is using `UNIX_TIMESTAMP`
     version.
+*   Added ContainerSpec executor that supports structural placeholders (not
+    Jinja placeholders).
 
 ## Bug fixes and other changes
 *   Depends on `kubernetes>=10.0.1,<12`.
