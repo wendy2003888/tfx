@@ -124,6 +124,7 @@ setup(
     namespace_packages=[],
     install_requires=_make_required_install_packages(),
     extras_require={
+        'test': _make_required_test_packages(),
         # In order to use 'docker-image' or 'all', system libraries specified
         # under 'tfx/tools/docker/Dockerfile' are required
         'docker-image': _make_extra_packages_docker_image(),

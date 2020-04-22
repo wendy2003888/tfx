@@ -1,0 +1,52 @@
+# Github action definition for ci-test with PRs.
+
+name: tfx-ci-test
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    if: github.actor != 'tfx-copybara'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Changed Files
+      id: changed_files
+      uses: trilom/file-changes-action@v1.2.3
+      with:
+        fileOutput: ' '
+    - name: Select files to check
+      run: |
+        cat $HOME/files_added.txt $HOME/files_modified.txt | tr ' ' '\n' | grep '\.py$' > py_files.txt || true
+        cat py_files.txt | grep '_test\.py$' > py_test_files.txt || true
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      env:
+        PROTO_VERSION: 3.11.4
+        PROTOC: bin/protoc
+      run: |
+        python -m pip install --upgrade pip
+        curl -sSOL https://github.com/protocolbuffers/protobuf/releases/download/v${PROTO_VERSION}/protoc-${PROTO_VERSION}-linux-x86_64.zip
+        unzip protoc-${PROTO_VERSION}-linux-x86_64.zip
+        pip install -e .[test]
+
+    - name: Test with pytest
+      shell: bash
+      run: |
+        [ ! -s "py_test_files.txt" ] || pytest --ignore-glob='*e2e*' --ignore-glob='*integration*' --ignore=tfx/examples $(cat py_test_files.txt | tr '\n' ' ')
+
+    - name: Lint with pylint
+      shell: bash
+      run: |
+        pip install pylint
+        echo "[NOTE] This linter is currently EXPERIMENTAL.======================================="
+        echo "Please contact reviewers for the existing lint errors or false negative errors."
+        echo "Feel free to send PRs for pylintrc in the root directory of the repository if needed."
+        echo "===================================================================================="
+        [ ! -s "py_files.txt" ] || pylint $(cat py_files.txt | tr '\n' ' ')
