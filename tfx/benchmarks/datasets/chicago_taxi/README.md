@@ -15,8 +15,10 @@ and export the results to a CSV file.
 2. Run `regenerate_datasets.py` as follows, changing the path to the CSV dataset
 as appropriate:
 
-```
-python regenerate_datasets.py -- --dataset=chicago_taxi --generate_dataset_args=/path/to/dataset.csv
+```bash
+# from tfx module directory
+python benchmarks/regenerate_datasets.py -- \
+  --dataset=chicago_taxi --generate_dataset_args=/path/to/dataset.csv
 ```
 
 This will regenerate the derived TFRecords dataset, as well as all intermediate

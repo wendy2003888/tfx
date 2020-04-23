@@ -27,8 +27,10 @@ import six
 import tensorflow as tf
 
 from tfx.components.base.annotations import InputArtifact
+from tfx.components.base.annotations import InputUri
 from tfx.components.base.annotations import OutputArtifact
 from tfx.components.base.annotations import OutputDict
+from tfx.components.base.annotations import OutputUri
 from tfx.components.base.function_parser import ArgFormats
 from tfx.components.base.function_parser import parse_typehint_component_function
 from tfx.types import standard_artifacts
@@ -45,23 +47,22 @@ class FunctionParserTest(tf.test.TestCase):
 
     inputs, outputs, arg_formats, returned_values = (
         parse_typehint_component_function(func_a))
-    self.assertDictEqual(
+    self.assertEqual(
         inputs, {
             'a': standard_artifacts.Integer,
             'b': standard_artifacts.Integer,
             'unused_c': standard_artifacts.String,
             'unused_d': standard_artifacts.Bytes,
         })
-    self.assertDictEqual(outputs, {
+    self.assertEqual(outputs, {
         'c': standard_artifacts.Float,
     })
-    self.assertDictEqual(
-        arg_formats, {
-            'a': ArgFormats.ARTIFACT_VALUE,
-            'b': ArgFormats.ARTIFACT_VALUE,
-            'unused_c': ArgFormats.ARTIFACT_VALUE,
-            'unused_d': ArgFormats.ARTIFACT_VALUE,
-        })
+    self.assertEqual(arg_formats, [
+        ('a', ArgFormats.ARTIFACT_VALUE),
+        ('b', ArgFormats.ARTIFACT_VALUE),
+        ('unused_c', ArgFormats.ARTIFACT_VALUE),
+        ('unused_d', ArgFormats.ARTIFACT_VALUE),
+    ])
     self.assertEqual(returned_values, set(['c']))
 
   def testArtifactFunctionParse(self):
@@ -69,12 +70,12 @@ class FunctionParserTest(tf.test.TestCase):
     def func_a(
         examples: InputArtifact[standard_artifacts.Examples],
         model: OutputArtifact[standard_artifacts.Model],
-        schema: InputArtifact[standard_artifacts.Schema],
-        statistics: OutputArtifact[standard_artifacts.ExampleStatistics],
+        schema_uri: InputUri[standard_artifacts.Schema],
+        statistics_uri: OutputUri[standard_artifacts.ExampleStatistics],
         num_steps: int
     ) -> OutputDict(
         precision=float, recall=float, message=Text, serialized_value=bytes):
-      del examples, model, schema, statistics, num_steps
+      del examples, model, schema_uri, statistics_uri, num_steps
       return {
           'precision': 0.9,
           'recall': 0.8,
@@ -84,29 +85,28 @@ class FunctionParserTest(tf.test.TestCase):
 
     inputs, outputs, arg_formats, returned_values = (
         parse_typehint_component_function(func_a))
-    self.assertDictEqual(
+    self.assertEqual(
         inputs, {
             'examples': standard_artifacts.Examples,
-            'schema': standard_artifacts.Schema,
+            'schema_uri': standard_artifacts.Schema,
             'num_steps': standard_artifacts.Integer,
         })
-    self.assertDictEqual(
+    self.assertEqual(
         outputs, {
             'model': standard_artifacts.Model,
-            'statistics': standard_artifacts.ExampleStatistics,
+            'statistics_uri': standard_artifacts.ExampleStatistics,
             'precision': standard_artifacts.Float,
             'recall': standard_artifacts.Float,
             'message': standard_artifacts.String,
             'serialized_value': standard_artifacts.Bytes,
         })
-    self.assertDictEqual(
-        arg_formats, {
-            'examples': ArgFormats.INPUT_ARTIFACT,
-            'model': ArgFormats.OUTPUT_ARTIFACT,
-            'schema': ArgFormats.INPUT_ARTIFACT,
-            'statistics': ArgFormats.OUTPUT_ARTIFACT,
-            'num_steps': ArgFormats.ARTIFACT_VALUE,
-        })
+    self.assertEqual(arg_formats, [
+        ('examples', ArgFormats.INPUT_ARTIFACT),
+        ('model', ArgFormats.OUTPUT_ARTIFACT),
+        ('schema_uri', ArgFormats.INPUT_URI),
+        ('statistics_uri', ArgFormats.OUTPUT_URI),
+        ('num_steps', ArgFormats.ARTIFACT_VALUE),
+    ])
     self.assertEqual(
         returned_values,
         set(['precision', 'recall', 'message', 'serialized_value']))
@@ -128,22 +128,21 @@ class FunctionParserTest(tf.test.TestCase):
     for func in [func_a, func_b]:
       inputs, outputs, arg_formats, returned_values = (
           parse_typehint_component_function(func))
-      self.assertDictEqual(
+      self.assertEqual(
           inputs, {
               'examples': standard_artifacts.Examples,
               'a': standard_artifacts.Integer,
               'b': standard_artifacts.Float,
           })
-      self.assertDictEqual(outputs, {
+      self.assertEqual(outputs, {
           'model': standard_artifacts.Model,
       })
-      self.assertDictEqual(
-          arg_formats, {
-              'examples': ArgFormats.INPUT_ARTIFACT,
-              'model': ArgFormats.OUTPUT_ARTIFACT,
-              'a': ArgFormats.ARTIFACT_VALUE,
-              'b': ArgFormats.ARTIFACT_VALUE,
-          })
+      self.assertEqual(arg_formats, [
+          ('examples', ArgFormats.INPUT_ARTIFACT),
+          ('model', ArgFormats.OUTPUT_ARTIFACT),
+          ('a', ArgFormats.ARTIFACT_VALUE),
+          ('b', ArgFormats.ARTIFACT_VALUE),
+      ])
       self.assertEqual(returned_values, set([]))
 
   def testFunctionParseErrors(self):

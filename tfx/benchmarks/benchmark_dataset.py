@@ -33,7 +33,7 @@ class BenchmarkDataset(object):
     Returns:
       The path to the datasets directory, with the subdir joined at the end.
     """
-    return os.path.join(os.path.dirname(__file__), "datasets", subdir)
+    return os.path.join("benchmarks/datasets", subdir)
 
   def dataset_path(self):
     """Returns the path to the dataset file."""
