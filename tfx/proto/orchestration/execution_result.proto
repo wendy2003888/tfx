@@ -38,5 +38,5 @@ message ExecutionResult {
 // An ExecutorOutput protobuf message snapshots the updated version of the
 // output artifacts together with (probably updated) MLMD properties.
 message ExecutorOutput {
-  map<string, ml_metadata.Artifact> output_dict = 1;
+  map<string, ml_metadata.Artifact> outputs = 1;
 }
