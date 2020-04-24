@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-from typing import Dict, Text
+from typing import Dict, List, Optional, Text
 from absl import app
 from absl import flags
 import tensorflow_model_analysis as tfma
@@ -101,10 +101,13 @@ _ai_platform_serving_args = {
 }
 
 
-def _create_pipeline(
-    pipeline_name: Text, pipeline_root: Text, module_file: Text,
+def create_pipeline(
+    pipeline_name: Text,
+    pipeline_root: Text,
+    module_file: Text,
     ai_platform_training_args: Dict[Text, Text],
-    ai_platform_serving_args: Dict[Text, Text]) -> pipeline.Pipeline:
+    ai_platform_serving_args: Dict[Text, Text],
+    beam_pipeline_args: Optional[List[Text]] = None) -> pipeline.Pipeline:
   """Implements the chicago taxi pipeline with TFX and Kubeflow Pipelines."""
 
   # The rate at which to sample rows from the Taxi dataset using BigQuery.
@@ -113,7 +116,7 @@ def _create_pipeline(
   # Feel free to crank it up and process the full dataset!
   # By default it generates a 0.1% random sample.
   query_sample_rate = data_types.RuntimeParameter(
-      name='query-sample-rate', ptype=float, default=0.001)
+      name='query_sample_rate', ptype=float, default=0.001)
 
   # This is the upper bound of FARM_FINGERPRINT in Bigquery (ie the max value of
   # signed int64).
@@ -150,25 +153,26 @@ def _create_pipeline(
   # Beam args to run data processing on DataflowRunner.
   # TODO(b/151114974): Remove `disk_size_gb` flag after default is increased.
   # TODO(b/151116587): Remove `shuffle_mode` flag after default is changed.
-  beam_pipeline_args = [
-      '--runner=DataflowRunner',
-      '--experiments=shuffle_mode=auto',
-      '--project=' + _project_id,
-      '--temp_location=' + os.path.join(_output_bucket, 'tmp'),
-      '--region=' + _gcp_region,
-      '--disk_size_gb=50',
-  ]
+  if beam_pipeline_args is None:
+    beam_pipeline_args = [
+        '--runner=DataflowRunner',
+        '--experiments=shuffle_mode=auto',
+        '--project=' + _project_id,
+        '--temp_location=' + os.path.join(_output_bucket, 'tmp'),
+        '--region=' + _gcp_region,
+        '--disk_size_gb=50',
+    ]
 
   # Number of epochs in training.
   train_steps = data_types.RuntimeParameter(
-      name='train-steps',
+      name='train_steps',
       default=10000,
       ptype=int,
   )
 
   # Number of epochs in evaluation.
   eval_steps = data_types.RuntimeParameter(
-      name='eval-steps',
+      name='eval_steps',
       default=5000,
       ptype=int,
   )
@@ -198,14 +202,14 @@ def _create_pipeline(
   # Update ai_platform_training_args if distributed training was enabled.
   # Number of worker machines used in distributed training.
   worker_count = data_types.RuntimeParameter(
-      name='worker-count',
+      name='worker_count',
       default=2,
       ptype=int,
   )
 
   # Type of worker machines used in distributed training.
   worker_type = data_types.RuntimeParameter(
-      name='worker-type',
+      name='worker_type',
       default='standard',
       ptype=str,
   )
@@ -312,7 +316,7 @@ def main(unused_argv):
       tfx_image=tfx_image)
 
   kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(
-      _create_pipeline(
+      create_pipeline(
           pipeline_name=_pipeline_name,
           pipeline_root=_pipeline_root,
           module_file=_module_file,
